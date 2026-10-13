@@ -1,0 +1,38 @@
+# ---- credentials and device state: never commit any of this ----
+#
+# A backup taken by scripts/backup.sh contains your VLESS URI (and therefore the
+# UUID), /etc/shadow, and the dropbear host keys. A generated profile contains
+# your server address. Treat all of it like a password.
+
+backups/
+device-base.json
+device-gen-base.json
+*.uri
+!examples/*.uri
+
+# ---- generated output ----
+out/
+*.singbox.json
+*.xray.json
+*.singbox.jsonc
+
+# ---- local scratch ----
+.tmp/
+*.local
+.env
+askpass*
+*.askpass
+
+# ---- editors / OS ----
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# ---- python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/

@@ -1,0 +1,109 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: generator + offline routing verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: shell syntax
+        run: |
+          for f in scripts/*.sh tools/*.sh; do
+            [ -e "$f" ] || continue
+            printf '%s: ' "$f"
+            sh -n "$f" && echo ok
+          done
+
+      - name: python syntax
+        run: python -m compileall -q scripts tools
+
+      - name: validate the China IP range data
+        run: |
+          python - <<'PY'
+          import ipaddress, sys
+          bad = 0
+          for path, ver in (("data/cn-ipv4.txt", 4), ("data/cn-ipv6.txt", 6)):
+              n = 0
+              for line in open(path):
+                  line = line.split("#")[0].strip()
+                  if not line:
+                      continue
+                  try:
+                      net = ipaddress.ip_network(line, strict=False)
+                  except ValueError:
+                      print("  bad CIDR in %s: %s" % (path, line)); bad += 1; continue
+                  if net.version != ver:
+                      print("  wrong family in %s: %s" % (path, line)); bad += 1
+                  n += 1
+              print("%s: %d ranges" % (path, n))
+              if n < 1000:
+                  print("  suspiciously few ranges"); bad += 1
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: generate from a share link
+        run: |
+          python scripts/gen-split-config.py \
+            --uri-file examples/node.example.uri \
+            --lan-cidrs 192.168.77.0/24 \
+            --outdir out
+
+      - name: generate from a device base config
+        run: |
+          python scripts/gen-split-config.py \
+            --base examples/device-base.example.json \
+            --lan-cidrs 192.168.77.0/24 \
+            --name split-cn-base \
+            --outdir out
+
+      - name: generated files are valid JSON and within the 1 MiB limit
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          LIMIT = 1024 * 1024
+          bad = 0
+          for name in sorted(os.listdir("out")):
+              path = os.path.join("out", name)
+              size = os.path.getsize(path)
+              try:
+                  json.load(open(path, encoding="utf-8"))
+                  parsed = "valid JSON"
+              except Exception as e:
+                  parsed = "INVALID: %s" % e; bad += 1
+              flag = "ok" if size <= LIMIT else "OVER 1 MiB"; bad += size > LIMIT
+              print("%-34s %9d bytes  %-12s %s" % (name, size, parsed, flag))
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: offline routing semantics
+        run: |
+          python tools/verify-routing.py \
+            out/split-cn.singbox.json \
+            out/split-cn.xray.json \
+            out/split-cn-base.singbox.json
+
+      - name: no credentials leaked into the tree
+        run: |
+          set +e
+          # a private IPv4 literal outside documentation/private space, or a
+          # UUID, appearing in a tracked source file means something slipped in
+          hits=$(grep -rInE \
+            '(vless|vmess|trojan|ss)://[A-Za-z0-9-]{8,}@'
+            --include='*.sh' --include='*.py' --include='*.json' \
+            --include='*.md' --include='*.yml' . \
+            | grep -v '^./examples/' || true)
+          if [ -n "$hits" ]; then
+            echo "possible credential material:"; echo "$hits"; exit 1
+          fi
+          echo "clean"

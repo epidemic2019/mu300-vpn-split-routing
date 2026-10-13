@@ -1,0 +1,33 @@
+{
+  "_readme": [
+    "ILLUSTRATIVE ONLY — the CIDR list is truncated to four entries so the file",
+    "stays readable. The real output has ~7456 of them and is generated for you:",
+    "",
+    "    ./scripts/gen-split-config.py --base device-base.json",
+    "",
+    "Only `route` is shown here. Real output also carries the `dns` and `outbounds`",
+    "blocks copied verbatim from the device's own gen output.",
+    "",
+    "This file is JSONC for readability; the generated file is strict JSON."
+  ],
+
+  "route": {
+    "rules": [
+      { "action": "sniff" },
+      { "protocol": "dns", "action": "hijack-dns" },
+
+      { "source_ip_cidr": ["192.168.77.0/24"], "ip_is_private": true, "action": "reject" },
+
+      { "ip_is_private": true, "outbound": "direct" },
+
+      { "ip_cidr": [
+          "1.0.1.0/24", "1.0.2.0/23", "1.0.8.0/21", "1.0.32.0/19",
+          "... 7452 more mainland-China ranges ..."
+      ], "outbound": "direct" }
+    ],
+
+    "final": "proxy",
+
+    "_final_note": "everything that is not private and not mainland-China goes here, i.e. into the tunnel"
+  }
+}

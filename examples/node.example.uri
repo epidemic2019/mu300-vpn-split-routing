@@ -1,0 +1,22 @@
+# Example share link — ALL VALUES ARE PLACEHOLDERS.
+#
+#   223.0.103.1        RFC 5737 documentation address (TEST-NET-3), not routable
+#   00000000-0000-...   an all-zero UUID
+#   AAAA...             a filler Reality public key
+#
+# Copy this file, replace every field with your own node's values, and pass it to
+# gen-split-config.py with --uri-file.
+#
+# A vless + Reality link, the shape this project was originally developed against:
+vless://00000000-0000-4000-8000-000000000000@223.0.103.1:443?encryption=none&security=reality&sni=www.example.com&fp=chrome&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=0123abcd&type=raw&flow=xtls-rprx-vision#example-node
+
+# Other shapes that also parse (uncomment as needed):
+#
+# vless + TLS + WebSocket
+# vless://00000000-0000-4000-8000-000000000000@223.0.103.1:443?encryption=none&security=tls&sni=cdn.example.com&fp=chrome&type=ws&path=%2Fws&host=cdn.example.com#vless-ws
+#
+# Trojan
+# trojan://password@223.0.103.1:443?security=tls&sni=www.example.com&type=tcp#trojan
+#
+# Shadowsocks
+# ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@223.0.103.1:8388#ss

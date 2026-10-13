@@ -1,0 +1,23 @@
+# Normalise line endings: these scripts run on Unix-like systems, and a CRLF in a
+# shebang line or a heredoc terminator breaks them.
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.py    text eol=lf
+*.uri   text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.jsonc text eol=lf
+*.txt   text eol=lf
+
+# The China range lists are plain text; keep them from being treated as binary or
+# re-wrapped.
+data/cn-ipv4.txt text eol=lf
+data/cn-ipv6.txt text eol=lf
+
+# Build output is never committed, but mark it binary-ish so diffs stay quiet.
+out/** -text
+backups/** -text
+
+# GitHub language statistics: this is a shell/python toolkit, not a JSON dump.
+data/*.txt linguist-generated=true
